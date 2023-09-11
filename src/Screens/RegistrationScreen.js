@@ -6,27 +6,68 @@ import {
   TouchableOpacity,
   TextInput,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native'
 import { COLORS } from '../libs/colors'
 import Icon from 'react-native-vector-icons/Ionicons'
 import { useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 export const RegistrationScreen = () => {
   const [isLogInFocused, setIsLogInFocused] = useState(false)
   const [isEmailFocused, setIsEmailFocused] = useState(false)
   const [isPasswordFocused, setIsPasswordFocused] = useState(false)
   const [isShowKeyboard, setIsShowKeyboard] = useState(false)
+  const [isPasswordShown, setIsPasswordShown] = useState(true)
+
+  const [login, setLogin] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  const emailRules = /\S+@\S+\.\S+/
+  // example: email@domain.com
+  const passwordRules = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{5,}$/
+  // min 5 characters, 1 upper case letter, 1 lower case letter, 1 numeric digit.
+
+  const schema = yup.object({
+    login: yup.string().required('Username is a required field'),
+    email: yup
+      .string()
+      .matches(emailRules, { message: 'Email is a required field' })
+      .required('Please fill in your email'),
+    password: yup
+      .string()
+      .matches(passwordRules, { message: 'Please create a stronger password' })
+      .required('Password is a required field')
+  })
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset
+  } = useForm({
+    resolver: yupResolver(schema)
+  })
+
+  const onSubmit = (data) => {
+    console.log(data)
+    reset()
+  }
 
   const onPressAddImg = () => {
     return
   }
 
   const onPressShowPassword = () => {
-    return
+    setIsPasswordShown(!isPasswordShown)
   }
 
-  const onPressRegisterBtn = () => {
+  const onPressLoginRedirect = () => {
     return
   }
 
@@ -36,95 +77,139 @@ export const RegistrationScreen = () => {
         source={require('../images/bg-login.jpg')}
         style={styles.bgImage}
       >
-        <KeyboardAvoidingView
-          style={[styles.formBgDecoration]}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.addPhotoWrapper}>
-            <View style={styles.addPhotoIcon}></View>
-            <TouchableOpacity
-              onPress={onPressAddImg}
-              title=""
-              style={styles.addPhotoBtn}
-            >
-              <Icon name="add" size={20} color={COLORS.addAvatarBtn} />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.title}>Реєстрація</Text>
-          <TextInput
-            style={[
-              styles.inputCommon,
-              styles.inputSpace,
-              isLogInFocused && styles.focusedInput
-            ]}
-            placeholder="Логін"
-            placeholderTextColor={COLORS.placeholderColor}
-            name="login"
-            onFocus={() => {
-              setIsLogInFocused(true), setIsShowKeyboard(true)
-            }}
-            onBlur={() => {
-              setIsLogInFocused(false)
-            }}
-          />
-          <TextInput
-            style={[
-              styles.inputCommon,
-              styles.inputSpace,
-              isEmailFocused && styles.focusedInput
-            ]}
-            placeholder="Адреса електронної пошти"
-            placeholderTextColor={COLORS.placeholderColor}
-            name="email"
-            onFocus={() => {
-              setIsEmailFocused(true), setIsShowKeyboard(true)
-            }}
-            onBlur={() => {
-              setIsEmailFocused(false)
-            }}
-          />
-          <View
-            style={{
-              marginBottom: isShowKeyboard ? 32 : 43
-            }}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView
+            style={[styles.formBgDecoration]}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
-            <TextInput
-              style={[
-                styles.inputCommon,
-                isPasswordFocused && styles.focusedInput
-              ]}
-              placeholder="Пароль"
-              placeholderTextColor={COLORS.placeholderColor}
-              name="password"
-              textContentType="password"
-              secureTextEntry={true}
-              onFocus={() => {
-                setIsPasswordFocused(true), setIsShowKeyboard(true)
+            <View style={styles.addPhotoWrapper}>
+              <View style={styles.addPhotoIcon}></View>
+              <TouchableOpacity
+                onPress={onPressAddImg}
+                title=""
+                style={styles.addPhotoBtn}
+              >
+                <Icon name="add" size={20} color={COLORS.addAvatarBtn} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.title}>Реєстрація</Text>
+            <View>
+              <Controller
+                control={control}
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.inputCommon,
+                      styles.inputSpace,
+                      isLogInFocused && styles.focusedInput
+                    ]}
+                    placeholder="Логін"
+                    placeholderTextColor={COLORS.placeholderColor}
+                    name="login"
+                    onFocus={() => {
+                      setIsLogInFocused(true), setIsShowKeyboard(true)
+                    }}
+                    onBlur={() => {
+                      setIsLogInFocused(false)
+                    }}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+                name="login"
+              />
+              {errors.login && (
+                <Text style={styles.errorMsg}>{errors.login.message}</Text>
+              )}
+            </View>
+
+            <View>
+              <Controller
+                control={control}
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.inputCommon,
+                      styles.inputSpace,
+                      isEmailFocused && styles.focusedInput
+                    ]}
+                    placeholder="Адреса електронної пошти"
+                    placeholderTextColor={COLORS.placeholderColor}
+                    name="email"
+                    onFocus={() => {
+                      setIsEmailFocused(true), setIsShowKeyboard(true)
+                    }}
+                    onBlur={() => {
+                      setIsEmailFocused(false)
+                    }}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+                name="email"
+              />
+              {errors.email && (
+                <Text style={styles.errorMsg}>{errors.email.message}</Text>
+              )}
+            </View>
+
+            <View
+              style={{
+                marginBottom: isShowKeyboard ? 32 : 43
               }}
-              onBlur={() => {
-                setIsPasswordFocused(false)
-              }}
-            />
-            <TouchableOpacity
-              style={styles.showPasswordTextWrapper}
-              onPress={onPressShowPassword}
             >
-              <Text style={styles.textShowPassword}>Показати</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
+              <Controller
+                control={control}
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.inputCommon,
+                      isPasswordFocused && styles.focusedInput
+                    ]}
+                    placeholder="Пароль"
+                    placeholderTextColor={COLORS.placeholderColor}
+                    name="password"
+                    textContentType="password"
+                    secureTextEntry={isPasswordShown}
+                    onFocus={() => {
+                      setIsPasswordFocused(true), setIsShowKeyboard(true)
+                    }}
+                    onBlur={() => {
+                      setIsPasswordFocused(false)
+                    }}
+                    onChangeText={onChange}
+                    value={value}
+                  />
+                )}
+                name="password"
+              />
+              <TouchableOpacity
+                style={styles.showPasswordTextWrapper}
+                onPress={onPressShowPassword}
+              >
+                <Text style={styles.textShowPassword}>Показати</Text>
+              </TouchableOpacity>
+              {errors.password && (
+                <Text style={styles.errorMsg}>{errors.password.message}</Text>
+              )}
+            </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+
         <View style={styles.buttonsBgDecoration}>
           <TouchableOpacity
             style={styles.registerBtn}
-            onPress={onPressRegisterBtn}
+            onPress={handleSubmit(onSubmit)}
           >
             <Text style={styles.registerBtnText}>Зареєстуватися</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.loginLink}
-            onPress={onPressShowPassword}
+            onPress={onPressLoginRedirect}
           >
-            <Text style={styles.loginLinkText}>Вже є акаунт? Увійти</Text>
+            <Text style={styles.loginLinkText}>
+              Немає акаунту? Зареєструватися
+            </Text>
           </TouchableOpacity>
         </View>
       </ImageBackground>
@@ -216,6 +301,14 @@ const styles = StyleSheet.create({
     color: COLORS.link,
     fontFamily: 'Roboto-Regular',
     fontSize: 16
+  },
+  errorMsg: {
+    position: 'absolute',
+    top: -8,
+    left: 16,
+    color: COLORS.errorColor,
+    fontSize: 16,
+    backgroundColor: COLORS.errorBg
   },
   registerBtn: {
     width: '100%',

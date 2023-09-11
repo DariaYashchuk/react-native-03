@@ -14,5 +14,8 @@ export const COLORS = {
   link: '#1B4371',
 
   primaryBtn: '#FF6C00',
-  whiteBtnText: '#fff'
+  whiteBtnText: '#fff',
+
+  errorColor: 'red',
+  errorBg: '#fff'
 }
